@@ -25,7 +25,7 @@ try:
 
         genai.configure(api_key=api_key)
 
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("models/gemini-2.5-flash")
         AI_ONLINE = True
         print("LIBRA MODE: ONLINE (Gemini Connected)")
     else:
