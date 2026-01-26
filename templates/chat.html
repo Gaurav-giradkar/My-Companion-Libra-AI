@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>My Companion</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=20">
+</head>
+
+<body class="ai-bg">
+
+<!-- FLOATING HUD NAV -->
+<div class="hud-nav">
+  <a href="/">HOME</a>
+  <a href="/about">ABOUT</a>
+
+  <!-- Theme Toggle -->
+  <button id="themeToggle">🎨</button>
+</div>
+
+<!-- FULLSCREEN STAGE -->
+<div class="ai-stage">
+
+  <!-- CHAT WINDOW -->
+  <div id="chatWindow" class="chat-window"></div>
+
+  <!-- AI CORE -->
+  <div class="ai-core">
+
+    <!-- WAVES -->
+    <div class="wave wave1"></div>
+    <div class="wave wave2"></div>
+    <div class="wave wave3"></div>
+    <div class="wave wave4"></div>
+    <div class="wave wave5"></div>
+
+    <!-- MAIN ORB -->
+    <div class="ai-circle" id="aiOrb">
+      <div class="ai-text" id="aiText">AI</div>
+    </div>
+
+  </div>
+
+<!-- CHAT INPUT -->
+<div class="chat-panel">
+
+<button type="button" id="voiceToggle" class="chat-orb voice-orb" title="Toggle Voice">
+  🔇
+</button>
+
+<input
+  id="userInput"
+  class="chat-input-orb"
+  placeholder="Talk to My Companion..."
+  onkeydown="if(event.key === 'Enter' && !event.repeat) sendMessage()"
+/>
+
+<button type="button" class="chat-orb send-orb" onclick="sendMessage()">
+  Send
+</button>
+
+</div>
+</div>
+
+<!-- CHAT LOGIC -->
+<script>
+const aiStatus = document.getElementById("ai-status");
+
+function setStatus(text, emoji = "🟢") {
+  if (!aiStatus) return;
+  aiStatus.textContent = `${emoji} ${text}`;
+}
+
+// --------------------
+// STATE
+// --------------------
+let voiceEnabled = false;
+let selectedVoice = null;
+let isSending = false;
+
+// --------------------
+// ELEMENTS
+// --------------------
+const voiceToggle = document.getElementById("voiceToggle");
+const userInput = document.getElementById("userInput");
+const chatWindow = document.getElementById("chatWindow");
+const aiOrb = document.getElementById("aiOrb");
+
+// --------------------
+// VOICE TOGGLE
+// --------------------
+voiceToggle.addEventListener("click", () => {
+  voiceEnabled = !voiceEnabled;
+  voiceToggle.textContent = voiceEnabled ? "🔊" : "🔇";
+  voiceToggle.classList.toggle("active", voiceEnabled);
+
+  if (!voiceEnabled) speechSynthesis.cancel();
+
+  aiOrb.style.boxShadow = voiceEnabled
+    ? "0 0 80px rgba(56,189,248,1)"
+    : "0 0 30px rgba(56,189,248,0.4)";
+});
+
+// --------------------
+// CHAT BUBBLES
+// --------------------
+function addUserBubble(text) {
+  const bubble = document.createElement("div");
+  bubble.className = "message user";
+  bubble.textContent = text;
+  chatWindow.appendChild(bubble);
+  chatWindow.scrollTop = chatWindow.scrollHeight;
+}
+
+function addAIBubble(text) {
+  const bubble = document.createElement("div");
+  bubble.className = "message ai";
+  bubble.textContent = text;
+  chatWindow.appendChild(bubble);
+  chatWindow.scrollTop = chatWindow.scrollHeight;
+}
+
+// --------------------
+// TEXT TO SPEECH
+// --------------------
+function speak(text) {
+  if (!("speechSynthesis" in window)) return;
+
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate = 1;
+  u.pitch = 1.1;
+  u.volume = 1;
+
+  if (selectedVoice) u.voice = selectedVoice;
+  speechSynthesis.speak(u);
+}
+
+function speakIfEnabled(text) {
+  if (voiceEnabled) speak(text);
+}
+
+// --------------------
+// FINISH HELPER
+// --------------------
+function finish(text) {
+  setStatus("ONLINE", "🟢");
+  addAIBubble(text);
+  speakIfEnabled(text);
+
+  userInput.disabled = false;
+  userInput.focus();
+  isSending = false;
+}
+
+// --------------------
+// SEND MESSAGE
+// --------------------
+async function sendMessage() {
+  if (isSending) return;
+  isSending = true;
+
+  const message = userInput.value.trim();
+  if (!message) {
+    isSending = false;
+    return;
+  }
+
+  userInput.value = "";
+  const msg = message.toLowerCase();
+
+  addUserBubble(message);
+
+  try {
+    if (msg === "libra") {
+      finish("Yes, I am listening.");
+      return;
+    }
+
+    if (msg === "time") {
+      finish(`The current time is ${new Date().toLocaleTimeString()}`);
+      return;
+    }
+
+    if (msg === "date") {
+      finish(`Today is ${new Date().toDateString()}`);
+      return;
+    }
+
+    if (msg === "clear chat") {
+      chatWindow.innerHTML = "";
+      finish("Chat cleared.");
+      return;
+    }
+
+    if (msg.includes("open youtube")) {
+      window.open("https://youtube.com", "_blank");
+      finish("Opening YouTube...");
+      return;
+    }
+
+    if (msg.startsWith("search ")) {
+      const query = msg.replace("search ", "").trim();
+      if (query) {
+        window.open(
+          `https://www.google.com/search?q=${encodeURIComponent(query)}`,
+          "_blank"
+        );
+        finish(`Searching for ${query}...`);
+        return;
+      }
+    }
+
+    if (["exit", "quit", "bye", "stop"].includes(msg)) {
+      finish("Goodbye. LIBRA is going offline.");
+      return;
+    }
+
+    await sendToAI(message);
+
+  } catch (err) {
+    finish("System error — input unlocked.");
+  }
+}
+
+// --------------------
+// SEND TO AI (BACKEND)
+// --------------------
+async function sendToAI(message) {
+  userInput.disabled = true;
+  setStatus("THINKING", "🟡");
+
+  const typingBubble = document.createElement("div");
+  typingBubble.className = "message ai typing";
+  typingBubble.textContent = "LIBRA is thinking...";
+  chatWindow.appendChild(typingBubble);
+  chatWindow.scrollTop = chatWindow.scrollHeight;
+
+  try {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message })
+    });
+
+    if (!response.ok) {
+      throw new Error("Server error");
+    }
+
+    const data = await response.json();
+    typingBubble.remove();
+
+    const reply =
+      data.reply ||
+      data.response ||
+      data.message ||
+      "LIBRA did not receive a valid response.";
+
+    finish(reply);
+
+  } catch (err) {
+    console.error("AI Error:", err);
+    typingBubble.remove();
+    finish("⚠️ Backend not responding — check Flask console");
+  }
+}
+
+// --------------------
+// VOICE LOADER
+// --------------------
+function loadVoices() {
+  const voices = speechSynthesis.getVoices();
+  if (!voices.length) return;
+
+  const englishVoices = voices.filter(v =>
+    v.lang.toLowerCase().startsWith("en")
+  );
+
+  selectedVoice = englishVoices[0] || null;
+}
+
+speechSynthesis.onvoiceschanged = loadVoices;
+loadVoices();
+</script>
+
+<!-- SHARED THEME SCRIPT -->
+<script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+
+</body>
+</html>

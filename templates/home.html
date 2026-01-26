@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>My Companion</title>
+
+  <!-- THEME CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=7" />
+</head>
+
+<body class="ai-bg">
+
+<!-- FLOATING HUD NAV -->
+<div class="hud-nav">
+  <a href="/about">ℹ️ About</a>
+  <button id="themeToggle" class="theme-toggle" title="Change Theme">🎨</button>
+</div>
+
+<!-- HERO STAGE -->
+<div class="ai-stage">
+
+  <div class="home-core glass">
+
+    <h1 class="glow-title">My Companion 🤖</h1>
+
+    <p class="hero-text">
+      Your always-on AI companion that listens, understands emotions,
+      and helps you stay productive, motivated, and connected.
+    </p>
+
+    <div class="hero-actions">
+      <a href="/chat" class="hero-btn">Start Chatting</a>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- SHARED THEME SCRIPT -->
+<script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+
+</body>
+</html>

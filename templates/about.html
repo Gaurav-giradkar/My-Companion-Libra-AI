@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>About | My Companion</title>
+
+  <!-- THEME CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=6">
+</head>
+
+<body class="ai-bg">
+
+<!-- FLOATING HUD NAV -->
+<div class="hud-nav">
+  <a href="/">🏠 Home</a>
+  <a href="/chat">💬 Chat</a>
+
+  <!-- THEME TOGGLE -->
+  <button id="themeToggle" class="theme-toggle" title="Change Theme">
+    🎨
+  </button>
+</div>
+
+<!-- ABOUT STAGE -->
+<div class="ai-stage">
+  <div class="about-core glass">
+
+    <h1>About My Companion 🤖</h1>
+
+    <p>
+      <strong>My Companion</strong> is a next-generation web-based AI assistant
+      designed to feel more like a digital friend than a chatbot.
+      It combines natural language understanding, emotional awareness,
+      and memory-based interactions to create meaningful conversations.
+    </p>
+
+    <p>
+      This project demonstrates how <strong>Artificial Intelligence</strong>,
+      <strong>Data Science</strong>, and <strong>Web Development</strong>
+      can work together to build an intelligent, responsive, and human-centered system.
+    </p>
+
+    <p>
+      The frontend is built using <strong>HTML, CSS, and JavaScript</strong>,
+      while the backend is powered by <strong>Python (Flask)</strong> and
+      integrates with the <strong>OpenAI API</strong> to generate real-time,
+      intelligent responses.
+    </p>
+
+    <div class="tech-stack">
+      <span>🧠 AI</span>
+      <span>🐍 Python</span>
+      <span>🌐 Web</span>
+      <span>📊 Data</span>
+      <span>☁️ Cloud</span>
+    </div>
+
+  </div>
+</div>
+
+<!-- SHARED THEME SCRIPT -->
+<script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+
+</body>
+</html>
