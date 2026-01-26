@@ -21,8 +21,11 @@ client = None
 
 try:
     if api_key:
-        from google import genai
-        client = genai.Client(api_key=api_key)
+        import google.generativeai as genai
+
+        genai.configure(api_key=api_key)
+
+        model = genai.GenerativeModel("gemini-1.5-flash")
         AI_ONLINE = True
         print("LIBRA MODE: ONLINE (Gemini Connected)")
     else:
@@ -103,12 +106,9 @@ def api_chat():
                 "LIBRA:"
             )
 
-            response = client.models.generate_content(
-                model="models/gemini-2.5-flash",
-                contents=prompt
-            )
-
+            response = model.generate_content(prompt)
             return jsonify({"reply": response.text})
+
 
         # -----------------------
         # OFFLINE MODE
