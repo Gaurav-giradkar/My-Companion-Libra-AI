@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect
 import os
 from dotenv import load_dotenv
 import requests
@@ -9,6 +9,11 @@ import random
 # -----------------------
 app = Flask(__name__)
 load_dotenv()
+
+@app.before_request
+def force_https():
+    if request.headers.get("X-Forwarded-Proto") == "http":
+        return redirect(request.url.replace("http://", "https://"), code=301)
 
 # -----------------------
 # API KEY CHECK
