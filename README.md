@@ -25,11 +25,13 @@ Gunicorn	                 |  Production Server
 JokeAPI      	             |  Humor System
 
 ## 🚀 Live Demo
-
-🔗 **Try LIBRA Online**  
+👉 **Try LIBRA Online**  
 https://my-companion-libra-ai.onrender.com
 
----------------------------------------------------------------------
+--------------------------------------------------------------------------------
+## License
+This project is licensed under the Apache License 2.0 © 2026 Gaurav Giradkar
+--------------------------------------------------------------------------------
 
 ## ⚙️ Installation (Local Setup)
 
