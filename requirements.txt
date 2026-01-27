@@ -3,4 +3,3 @@ python-dotenv
 google-generativeai
 gunicorn
 requests
-firebase-admin
