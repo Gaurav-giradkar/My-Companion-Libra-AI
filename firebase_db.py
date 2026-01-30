@@ -1,18 +1,33 @@
+import os
 import firebase_admin
 from firebase_admin import credentials, firestore
-import os
 
-# Load Firebase key from file OR environment variable
-if not firebase_admin._apps:
-    key_path = os.getenv("FIREBASE_KEY_PATH", "firebase_key.json")
-    cred = credentials.Certificate(key_path)
-    firebase_admin.initialize_app(cred)
+# -------------------------
+# FIREBASE INIT
+# -------------------------
+def init_firebase():
+    if not firebase_admin._apps:
+        key_path = os.getenv("FIREBASE_KEY_PATH", "firebase_key.json")
 
-db = firestore.client()
+        if not os.path.exists(key_path):
+            raise RuntimeError(f"Firebase key file not found at: {key_path}")
 
+        cred = credentials.Certificate(key_path)
+        firebase_admin.initialize_app(cred)
+
+    return firestore.client()
+
+db = init_firebase()
+
+# -------------------------
+# HELPERS
+# -------------------------
 def get_user_ref(username):
     return db.collection("users").document(username)
 
+# -------------------------
+# MEMORY SYSTEM
+# -------------------------
 def save_memory(username, user_msg, ai_msg):
     user_ref = get_user_ref(username)
     user_ref.collection("memory").add({
@@ -29,8 +44,12 @@ def get_memory(username, limit=5):
         .limit(limit)
         .stream()
     )
+
     return [(d.to_dict().get("user"), d.to_dict().get("ai")) for d in docs]
 
+# -------------------------
+# PREFERENCES SYSTEM
+# -------------------------
 def save_preference(username, key, value):
     user_ref = get_user_ref(username)
     user_ref.collection("preferences").document(key).set({
