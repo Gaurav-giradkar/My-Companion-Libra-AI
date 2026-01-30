@@ -1,16 +1,16 @@
 from flask import Flask, render_template, request, jsonify, redirect
-from db import save_memory, get_memory, get_or_create_user, save_preference, get_preferences
 import os
 from dotenv import load_dotenv
 import requests
 import random
+from firebase_db import save_memory, get_memory, save_preference, get_preferences
 
 # -----------------------
 # APP SETUP
 # -----------------------
 app = Flask(__name__)
 load_dotenv()
-LIBRA_USER_ID = get_or_create_user("gaurav")
+LIBRA_USER = "gaurav"
 
 @app.before_request
 def force_https():
@@ -106,12 +106,12 @@ def api_chat():
         # -----------------------
         # LOAD MEMORY CONTEXT
         # -----------------------
-        memory = get_memory(LIBRA_USER_ID, limit=5)
-        prefs = get_preferences(LIBRA_USER_ID)
+        memory = get_memory(LIBRA_USER, limit=5)
+        prefs = get_preferences(LIBRA_USER)
+
         pref_text = ""
         for k, v in prefs.items():
             pref_text += f"{k.replace('_',' ').title()}: {v}\n"
-
 
         context = ""
         for m in reversed(memory):
@@ -134,16 +134,18 @@ def api_chat():
             response = model.generate_content(prompt)
             libra_reply = response.text
 
+            # -----------------------
+            # AUTO-DETECT PREFERENCES
+            # -----------------------
             msg = user_message.lower()
             if "favorite color is" in msg:
                 color = msg.split("favorite color is")[-1].strip()
-                save_preference(LIBRA_USER_ID, "favorite_color", color)
-
+                save_preference(LIBRA_USER, "favorite_color", color)
 
             # -----------------------
             # SAVE TO MEMORY
             # -----------------------
-            save_memory(LIBRA_USER_ID, user_message, libra_reply)
+            save_memory(LIBRA_USER, user_message, libra_reply)
 
             return jsonify({"reply": libra_reply})
 
@@ -154,7 +156,7 @@ def api_chat():
             reply = offline_ai_reply(user_message)
 
             # SAVE OFFLINE MEMORY TOO
-            save_memory(LIBRA_USER_ID, user_message, reply)
+            save_memory(LIBRA_USER, user_message, reply)
 
             return jsonify({"reply": reply})
 
