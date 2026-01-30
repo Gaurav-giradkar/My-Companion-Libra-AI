@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, jsonify, redirect
+from db import save_memory, get_memory, get_or_create_user, save_preference, get_preferences
 import os
 from dotenv import load_dotenv
 import requests
@@ -9,6 +10,7 @@ import random
 # -----------------------
 app = Flask(__name__)
 load_dotenv()
+LIBRA_USER_ID = get_or_create_user("gaurav")
 
 @app.before_request
 def force_https():
@@ -102,24 +104,58 @@ def api_chat():
 
     try:
         # -----------------------
+        # LOAD MEMORY CONTEXT
+        # -----------------------
+        memory = get_memory(LIBRA_USER_ID, limit=5)
+        prefs = get_preferences(LIBRA_USER_ID)
+        pref_text = ""
+        for k, v in prefs.items():
+            pref_text += f"{k.replace('_',' ').title()}: {v}\n"
+
+
+        context = ""
+        for m in reversed(memory):
+            context += f"User: {m[0]}\nLIBRA: {m[1]}\n"
+
+        # -----------------------
         # ONLINE MODE (GEMINI)
         # -----------------------
         if AI_ONLINE:
             prompt = (
-                "You are LIBRA, a futuristic AI companion.\n\n"
-                f"User: {user_message}\n"
+                "You are LIBRA, a futuristic AI companion with memory.\n"
+                "You remember past conversations and user preferences. If there are conflicts, trust the MOST RECENT preference.\n\n"
+                "Known user preferences:\n"
+                + pref_text + "\n"
+                + context +
+                f"\nUser: {user_message}\n"
                 "LIBRA:"
             )
 
             response = model.generate_content(prompt)
-            return jsonify({"reply": response.text})
+            libra_reply = response.text
 
+            msg = user_message.lower()
+            if "favorite color is" in msg:
+                color = msg.split("favorite color is")[-1].strip()
+                save_preference(LIBRA_USER_ID, "favorite_color", color)
+
+
+            # -----------------------
+            # SAVE TO MEMORY
+            # -----------------------
+            save_memory(LIBRA_USER_ID, user_message, libra_reply)
+
+            return jsonify({"reply": libra_reply})
 
         # -----------------------
         # OFFLINE MODE
         # -----------------------
         else:
             reply = offline_ai_reply(user_message)
+
+            # SAVE OFFLINE MEMORY TOO
+            save_memory(LIBRA_USER_ID, user_message, reply)
+
             return jsonify({"reply": reply})
 
     except Exception as e:
@@ -186,3 +222,4 @@ def ping():
 # -----------------------
 if __name__ == "__main__":
     app.run(debug=True)
+    
