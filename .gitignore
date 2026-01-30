@@ -127,3 +127,6 @@ __marimo__/
 >>>>>>> 91be417aca0cb969a92bf56b137269da66fe1cf1
 
 firebase_key.json
+.env
+__pycache__/
+*.pyc
