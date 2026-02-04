@@ -193,11 +193,22 @@ async function sendMessage() {
       return;
     }
 
-    if (msg.includes("open youtube")) {
-      window.open("https://youtube.com", "_blank");
-      finish("Opening YouTube...");
+    if (msg.startsWith("open ")) {
+      const site = msg.replace("open ", "").trim();
+      const url = site.includes(".")
+        ? `https://${site}`
+        : `https://${site}.com`;
+    
+      window.open(url, "_blank");
+      finish(`Opening ${site}...`);
       return;
     }
+
+    // if (msg.includes("open youtube")) {
+    //   window.open("https://youtube.com", "_blank");
+    //   finish("Opening YouTube...");
+    //   return;
+    // }
 
     if (msg.startsWith("search ")) {
       const query = msg.replace("search ", "").trim();
