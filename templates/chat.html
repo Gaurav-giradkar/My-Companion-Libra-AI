@@ -204,12 +204,6 @@ async function sendMessage() {
       return;
     }
 
-    // if (msg.includes("open youtube")) {
-    //   window.open("https://youtube.com", "_blank");
-    //   finish("Opening YouTube...");
-    //   return;
-    // }
-
     if (msg.startsWith("search ")) {
       const query = msg.replace("search ", "").trim();
       if (query) {
