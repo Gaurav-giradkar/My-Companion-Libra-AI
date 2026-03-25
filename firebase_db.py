@@ -3,7 +3,6 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from utils.embedding import get_embedding
 from utils.embedding import get_embedding
-import numpy as np
 from config.settings import FIREBASE_KEY_PATH
 
 # -------------------------
@@ -82,11 +81,6 @@ def save_memory(username, user_msg, ai_msg):
         "importance": importance,
         "timestamp": firestore.SERVER_TIMESTAMP
     })
-
-
-def cosine_similarity(a, b):
-    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
-
 
 def get_memory(username, query, limit=5):
     user_ref = get_user_ref(username)
