@@ -1,65 +1,98 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>My Companion</title>
+{% extends "base.html" %}
 
-  <!-- THEME CSS -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=6">
-</head>
+{% block title %}My Companion | About{% endblock %}
+{% block body_class %}page-about{% endblock %}
 
-<body class="ai-bg">
-
-<!-- FLOATING HUD NAV -->
+{% block body %}
 <div class="hud-nav">
-  <a href="/">🏠 Home</a>
-  <a href="/chat">💬 Chat</a>
-
-  <!-- THEME TOGGLE -->
-  <button id="themeToggle" class="theme-toggle" title="Change Theme">
-    🎨
-  </button>
-</div>
-
-<!-- ABOUT STAGE -->
-<div class="ai-stage">
-  <div class="about-core glass">
-
-    <h1>About My Companion Libra-AI 🤖</h1>
-
-    <p>
-      <strong>My Companion</strong> is a next-generation web-based AI assistant
-      designed to feel more like a digital friend than a chatbot.
-      It combines natural language understanding, emotional awareness,
-      and memory-based interactions to create meaningful conversations.
-    </p>
-
-    <p>
-      This project demonstrates how <strong>Artificial Intelligence</strong>,
-      <strong>Data Science</strong>, and <strong>Web Development</strong>
-      can work together to build an intelligent, responsive, and human-centered system.
-    </p>
-
-    <p>
-      The frontend is built using <strong>HTML, CSS, and JavaScript</strong>,
-      while the backend is powered by <strong>Python (Flask)</strong> and
-      integrates with the <strong>OpenAI API</strong> to generate real-time,
-      intelligent responses.
-    </p>
-
-    <div class="tech-stack">
-      <span>🧠 AI</span>
-      <span>🐍 Python</span>
-      <span>🌐 Web</span>
-      <span>📊 Data</span>
-      <span>☁️ Cloud</span>
+  <a href="/" class="brand-mark">
+    <span class="brand-pulse"></span>
+    <span class="brand-copy">
+      <strong>LIBRA</strong>
+      <small>Adaptive Companion Deck</small>
+    </span>
+  </a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/chat">Chat</a>
+  </div>
+  <div class="nav-tools">
+    <div class="nav-theme-status">
+      <span class="nav-kicker">Theme</span>
+      <strong data-theme-name>Deep Blue</strong>
     </div>
-
+    <button id="themeToggle" class="theme-toggle" type="button" title="Change theme">
+      Theme Matrix
+    </button>
   </div>
 </div>
 
-<!-- SHARED THEME SCRIPT -->
-<script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+<main class="page-stage about-stage">
+  <section class="card about-card interactive-card" data-tilt>
+    <div class="about-head">
+      <div>
+        <p class="eyebrow">System briefing</p>
+        <h1>About My Companion</h1>
+      </div>
+      <div class="signal-badge">
+        <span class="signal-dot"></span>
+        Runtime overview
+      </div>
+    </div>
 
-</body>
-</html>
+    <p class="lead">
+      My Companion is a Flask-based AI cockpit that blends conversational
+      replies, lightweight emotion awareness, persistent user memory, and a
+      more cinematic interface layer.
+    </p>
+
+    <div class="about-grid">
+      <article class="content-block interactive-card" data-tilt>
+        <h2>Backend intelligence</h2>
+        <p>
+          LIBRA supports Gemini-powered replies when an API key is configured,
+          then drops into a built-in offline mode so the experience keeps moving.
+        </p>
+      </article>
+
+      <article class="content-block interactive-card" data-tilt>
+        <h2>Memory + behavior</h2>
+        <p>
+          Conversation memory, preferences, and behavior signals can use Firebase
+          when available, and automatically fall back to a local JSON store when needed.
+        </p>
+      </article>
+
+      <article class="content-block interactive-card" data-tilt>
+        <h2>Interface layer</h2>
+        <p>
+          The frontend combines server-rendered templates, theme switching,
+          hover depth, live telemetry, and motion tuned for desktop and mobile.
+        </p>
+      </article>
+    </div>
+
+    <div class="about-rail">
+      <article class="story-panel">
+        <p class="panel-kicker">Design direction</p>
+        <h2>More command center, less plain dashboard.</h2>
+        <p>
+          The current version leans into atmospheric lighting, bold display
+          typography, glass panels, and interaction cues that feel intentional.
+        </p>
+      </article>
+
+      <article class="story-panel">
+        <p class="panel-kicker">Current stack</p>
+        <ul class="tech-list">
+          <li>Flask</li>
+          <li>Google Gemini</li>
+          <li>Firebase</li>
+          <li>HTML, CSS, JavaScript</li>
+          <li>Render or Gunicorn deployment</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+</main>
+{% endblock %}

@@ -1,68 +1,106 @@
-const THEMES = ["blue", "purple", "green", "red"];
-const THEME_CLASSES = THEMES.map(t => "theme-" + t);
+const THEMES = [
+  { id: "blue", label: "Deep Blue", detail: "cool neon grid" },
+  { id: "green", label: "Signal Green", detail: "clean synth glow" },
+  { id: "red", label: "Solar Red", detail: "alert cinema hue" },
+  { id: "purple", label: "Night Violet", detail: "midnight plasma" },
+];
+
+const THEME_CLASSES = THEMES.map((theme) => `theme-${theme.id}`);
+
+function getThemeMeta(themeId) {
+  return THEMES.find((theme) => theme.id === themeId) || THEMES[0];
+}
+
+function syncThemeIndicators(themeId) {
+  const theme = getThemeMeta(themeId);
+
+  document.querySelectorAll("[data-theme-name]").forEach((node) => {
+    node.textContent = theme.label;
+  });
+
+  const themeToggle = document.getElementById("themeToggle");
+  if (themeToggle) {
+    themeToggle.dataset.activeTheme = theme.label;
+  }
+}
 
 function applyTheme(theme) {
   document.body.classList.remove(...THEME_CLASSES);
-  document.body.classList.add("ai-bg", "theme-" + theme);
+  document.body.classList.add("ai-bg", `theme-${theme}`);
   localStorage.setItem("libra-theme", theme);
+  syncThemeIndicators(theme);
 }
 
-// --------------------
-// CREATE THEME STACK
-// --------------------
 function createThemeStack() {
   let stack = document.querySelector(".theme-stack");
-  if (stack) return stack;
+  if (stack) {
+    return stack;
+  }
 
   stack = document.createElement("div");
   stack.className = "theme-stack";
-  stack.innerHTML = `
-    <div class="theme-bubble theme-blue" data-theme="blue">Dusk Neon</div>
-    <div class="theme-bubble theme-purple" data-theme="purple">Obsidian Glow</div>
-    <div class="theme-bubble theme-green" data-theme="green">Dark Elegant</div>
-    <div class="theme-bubble theme-red" data-theme="red">Berry Red</div>
-  `;
+  stack.innerHTML = THEMES.map(
+    (theme) => `
+      <button type="button" class="theme-bubble theme-${theme.id}" data-theme="${theme.id}">
+        <span class="theme-bubble-label">${theme.label}</span>
+        <small>${theme.detail}</small>
+      </button>
+    `
+  ).join("");
 
   document.body.appendChild(stack);
 
-  stack.querySelectorAll(".theme-bubble").forEach(bubble => {
+  stack.querySelectorAll(".theme-bubble").forEach((bubble) => {
     bubble.addEventListener("click", () => {
       applyTheme(bubble.dataset.theme);
-      stack.style.display = "none";
+      stack.classList.remove("is-open");
+      const themeToggle = document.getElementById("themeToggle");
+      if (themeToggle) {
+        themeToggle.setAttribute("aria-expanded", "false");
+      }
     });
   });
 
   return stack;
 }
 
-// --------------------
-// INIT SYSTEM
-// --------------------
 document.addEventListener("DOMContentLoaded", () => {
   const savedTheme = localStorage.getItem("libra-theme");
-  applyTheme(savedTheme && THEMES.includes(savedTheme) ? savedTheme : "blue");
+  const preferredTheme =
+    savedTheme && THEMES.some((theme) => theme.id === savedTheme) ? savedTheme : "blue";
+  applyTheme(preferredTheme);
 
   const themeToggle = document.getElementById("themeToggle");
-  if (!themeToggle) return;
+  if (!themeToggle) {
+    return;
+  }
 
   const stack = createThemeStack();
+  themeToggle.setAttribute("aria-expanded", "false");
 
-  themeToggle.addEventListener("click", (e) => {
-    e.stopPropagation();
-    stack.style.display = stack.style.display === "flex" ? "none" : "flex";
+  themeToggle.addEventListener("click", (event) => {
+    event.stopPropagation();
+    const isOpen = stack.classList.toggle("is-open");
+    themeToggle.setAttribute("aria-expanded", String(isOpen));
   });
 
-  // Close stack on outside click
   document.addEventListener("click", () => {
-    stack.style.display = "none";
+    stack.classList.remove("is-open");
+    themeToggle.setAttribute("aria-expanded", "false");
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") {
+      return;
+    }
+
+    stack.classList.remove("is-open");
+    themeToggle.setAttribute("aria-expanded", "false");
   });
 });
 
-// --------------------
-// SYNC ACROSS TABS
-// --------------------
-window.addEventListener("storage", (e) => {
-  if (e.key === "libra-theme" && e.newValue) {
-    applyTheme(e.newValue);
+window.addEventListener("storage", (event) => {
+  if (event.key === "libra-theme" && event.newValue) {
+    applyTheme(event.newValue);
   }
 });

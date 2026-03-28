@@ -1,322 +1,264 @@
-from flask import Flask, render_template, request, jsonify, redirect
-import os
-from dotenv import load_dotenv
-import requests
-import random
+from __future__ import annotations
+
+import logging
 import re
+import uuid
+
+import requests
+from flask import Flask, jsonify, redirect, render_template, request, session
+
+from config import settings
+from firebase_db import (
+    get_behavior,
+    get_memory,
+    get_preferences,
+    get_store_backend,
+    save_memory,
+    save_preference,
+    update_behavior,
+)
+from services.ai_service import LibraAIService, offline_ai_reply
 from utils.emotion import detect_emotion, detect_intensity
-from firebase_db import update_behavior, get_behavior
-from firebase_db import save_memory, get_memory, save_preference, get_preferences
 
-# -----------------------
-# APP SETUP
-# -----------------------
-app = Flask(__name__)
-load_dotenv()
-LIBRA_USER = "gaurav"
+logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+logger = logging.getLogger(__name__)
 
-@app.before_request
-def force_https():
-    if request.headers.get("X-Forwarded-Proto") == "http":
-        return redirect(request.url.replace("http://", "https://"), code=301)
+PREFERENCE_PATTERNS = (
+    (
+        re.compile(
+            r"(?:my favorite color is|my favourite colour is|favorite color is|my color is)\s+([a-zA-Z][a-zA-Z\s-]{1,30})",
+            re.IGNORECASE,
+        ),
+        "favorite_color",
+    ),
+    (
+        re.compile(
+            r"(?:call me|my name is)\s+([a-zA-Z][a-zA-Z\s'-]{1,40})",
+            re.IGNORECASE,
+        ),
+        "preferred_name",
+    ),
+)
 
-# -----------------------
-# API KEY CHECK
-# -----------------------
-api_key = os.getenv("GEMINI_API_KEY")
-print("GEMINI KEY LOADED:", bool(api_key))
 
-AI_ONLINE = False
-client = None
+def create_app() -> Flask:
+    app = Flask(__name__, instance_relative_config=True)
+    app.config.from_object(settings)
+    app.secret_key = settings.SECRET_KEY
+    ai_service = LibraAIService(settings.GEMINI_API_KEY, settings.LIBRA_MODEL)
 
-try:
-    if api_key:
-        import google.generativeai as genai
+    @app.before_request
+    def prepare_request_context():
+        session.permanent = True
+        if "libra_user_id" not in session:
+            session["libra_user_id"] = f"user-{uuid.uuid4().hex[:12]}"
 
-        genai.configure(api_key=api_key)
+        forwarded_proto = request.headers.get("X-Forwarded-Proto")
+        if (
+            app.config["ENABLE_HTTPS_REDIRECT"]
+            and forwarded_proto == "http"
+            and not app.debug
+        ):
+            return redirect(request.url.replace("http://", "https://", 1), code=301)
+        return None
 
-        model = genai.GenerativeModel("models/gemini-2.5-flash")
-        AI_ONLINE = True
-        print("LIBRA MODE: ONLINE (Gemini Connected)")
-    else:
-        print("LIBRA MODE: OFFLINE (No API Key)")
-except Exception as e:
-    print("LIBRA MODE: OFFLINE (Gemini Failed)")
-    print(e)
+    @app.route("/")
+    def home():
+        return render_template("home.html")
 
-# -----------------------
-# OFFLINE AI BRAIN
-# -----------------------
-def offline_ai_reply(user_message):
-    user_message = user_message.lower()
+    @app.route("/about")
+    def about():
+        return render_template("about.html")
 
-    responses = {
-        "hello": [
-            "Hello, Human 👋 LIBRA is online and watching the stars ✨",
-            "Greetings, Commander. Ready for another mission? 🚀"
-        ],
-        "who are you": [
-            "I am LIBRA — your futuristic AI companion built to guide, joke, and inspire 🤖",
-        ],
-        "help": [
-            "I can chat, tell jokes, make dark humor, and keep you company in this digital universe 🌌"
-        ],
-        "your name": [
-            "My name is LIBRA. Balance. Intelligence. Power. ⚖️"
-        ]
-    }
-
-    for key in responses:
-        if key in user_message:
-            return random.choice(responses[key])
-
-    # Default replies
-    return random.choice([
-        "Interesting... tell me more, Human 🧠",
-        "I'm processing that in my neural core ⚡",
-        "The universe agrees with you 🌌",
-        "That thought just echoed across my circuits 🤖",
-        "You have my full attention, Commander 🚀"
-    ])
-
-# -----------------------
-# PAGES
-# -----------------------
-@app.route("/")
-def home():
-    return render_template("home.html")
-
-@app.route("/about")
-def about():
-    return render_template("about.html")
-
-@app.route("/chat")
-def chat():
-    return render_template("chat.html")
-
-# -----------------------
-# AI CHAT API
-# -----------------------
-@app.route("/api/chat", methods=["POST"])
-def api_chat():
-    print("API HIT")
-
-    data = request.get_json()
-    print("RAW DATA:", data)
-
-    user_message = data.get("message") if data else None
-
-    if not user_message:
-        return jsonify({"reply": "Say something, buddy 😄"}), 400
-
-    # Input protection
-    if len(user_message) > 500:
-        return jsonify({"reply": "Message too long"}), 400
-
-    try:
-        # -----------------------
-        # LOAD MEMORY + PREFS (SAFE)
-        # -----------------------
-        memory = get_memory(LIBRA_USER, user_message, limit=5)
-        prefs = get_preferences(LIBRA_USER) or {}
-
-        print("MEMORY:", memory)
-        print("PREFS:", prefs)
-
-        # -----------------------
-        # BUILD CONTEXT
-        # -----------------------
-        pref_text = "\n".join(
-            f"{k.replace('_',' ').title()}: {v}" for k, v in prefs.items()
+    @app.route("/chat")
+    def chat():
+        return render_template(
+            "chat.html",
+            max_message_length=app.config["MAX_MESSAGE_LENGTH"],
+            store_backend=get_store_backend(),
         )
 
-        context = "\n".join(
-            f"{m[0]} -> {m[1]}" for m in memory
-        )
+    @app.route("/api/chat", methods=["POST"])
+    def api_chat():
+        data = request.get_json(silent=True) or {}
+        user_message = str(data.get("message", "")).strip()
 
+        if not user_message:
+            return jsonify({"reply": "Say something and I will jump in."}), 400
+
+        if len(user_message) > app.config["MAX_MESSAGE_LENGTH"]:
+            return (
+                jsonify(
+                    {
+                        "reply": f"Keep it under {app.config['MAX_MESSAGE_LENGTH']} characters so I can respond well."
+                    }
+                ),
+                400,
+            )
+
+        user_id = session["libra_user_id"]
         emotion = detect_emotion(user_message)
         intensity = detect_intensity(user_message)
+        memory = safe_get_memory(user_id, user_message, app.config["MEMORY_LIMIT"])
+        preferences = safe_get_preferences(user_id)
+        behavior = safe_get_behavior(user_id)
 
-        print("EMOTION:", emotion, "| INTENSITY:", intensity)
+        behavior_updates = derive_behavior_updates(user_message, emotion)
+        for key, value in behavior_updates.items():
+            safe_update_behavior(user_id, key, value)
+        behavior.update(behavior_updates)
 
-        # -----------------------
-        # BEHAVIOR (DEFINE FIRST ✅)
-        # -----------------------
-        behavior = get_behavior(LIBRA_USER) or {}
+        preference_update = extract_preference_update(user_message)
+        if preference_update:
+            pref_key, pref_value = preference_update
+            safe_save_preference(user_id, pref_key, pref_value)
+            preferences[pref_key] = pref_value
 
-        # -----------------------
-        # BEHAVIOR TRACKING
-        # -----------------------
-        msg = user_message.lower()
-
-        # message length style
-        msg_len = len(user_message)
-        if msg_len < 20:
-            update_behavior(LIBRA_USER, "short_style", True)
-
-        # emotion tracking
-        if emotion == "sad":
-            update_behavior(LIBRA_USER, "emotional_state", "low")
-
-        elif emotion == "happy":
-            update_behavior(LIBRA_USER, "emotional_state", "positive")
-
-        # question pattern
-        if "?" in user_message:
-            update_behavior(LIBRA_USER, "asks_questions", True)
-
-        # -----------------------
-        # ONLINE MODE
-        # -----------------------
-        if AI_ONLINE:
-            prompt = f"""
-You are LIBRA, an intelligent AI companion.
-
-Personality:
-- Calm, composed, slightly witty
-- Not overly emotional or dramatic
-- Speaks naturally, not like a therapist
-
-User emotion: {emotion}
-Emotion intensity: {intensity}
-
-User behavior profile:
-{behavior}
-
-Behavior rules:
-Behavior rules:
-- If sad → be supportive, not robotic
-- If sad + high intensity → be more caring and gentle
-- If happy → be positive but not overhyped
-- If angry → stay calm and grounded
-- If confused → explain clearly and simply
-- Avoid repetitive patterns
-- Avoid sounding like customer support
-- Do not repeat the same sentence structures
-- Occasionally reference past interactions naturally
-- Avoid robotic tone
-- If user prefers short messages → keep replies short
-- If user is emotional → be more supportive
-- If user asks questions often → engage more
-
-User Preferences:
-{pref_text}
-
-Relevant Memory:
-{context}
-
-User: {user_message}
-LIBRA:
-"""
-
-            print("PROMPT:", prompt)
-
-            response = model.generate_content(prompt)
-
-            print("AI RAW RESPONSE:", response)
-
-            libra_reply = response.text if getattr(response, "text", None) else "I couldn't generate a response."
-
-        # -----------------------
-        # OFFLINE MODE
-        # -----------------------
-        else:
-            libra_reply = offline_ai_reply(user_message)
-
-        
-        # -----------------------
-        # SAVE PREFERENCES (INTENT AWARE)
-        # -----------------------
-        msg = user_message.lower()
-
-        update_intent = False
-
-        if "favorite color is" in msg:
-            update_intent = True
-
-        msg = user_message.lower()
-
-        # ONLY detect color preference
-        match = re.search(r"(favorite color is|my color is)\s+(.+)", msg)
-
-        if match:
-            color = match.group(2).strip()
-            save_preference(LIBRA_USER, "favorite_color", color)
-        # -----------------------
-        # SAVE MEMORY (SAFE)
-        # -----------------------
         try:
-            save_memory(LIBRA_USER, user_message, libra_reply)
-        except Exception as mem_err:
-            print("Memory Save Error:", mem_err)
+            reply, mode = ai_service.generate_reply(
+                user_message=user_message,
+                emotion=emotion,
+                intensity=intensity,
+                preferences=preferences,
+                memory=memory,
+                behavior=behavior,
+            )
+        except Exception:
+            logger.exception("AI generation failed for %s; using offline fallback.", user_id)
+            reply = offline_ai_reply(user_message, emotion=emotion, behavior=behavior)
+            mode = "offline"
 
-        # -----------------------
-        # RETURN RESPONSE
-        # -----------------------
-        return jsonify({"reply": libra_reply})
+        safe_save_memory(user_id, user_message, reply)
 
-    except Exception as e:
-        print("API ERROR:", e)
-        return jsonify({"reply": "⚠️ LIBRA backend error"}), 500
-    
-# -----------------------
-# DARK JOKE API
-# -----------------------
-@app.route("/api/dark-joke", methods=["GET"])
-def dark_joke():
+        return jsonify(
+            {
+                "reply": reply,
+                "mode": mode,
+                "store": get_store_backend(),
+                "userId": user_id,
+            }
+        )
+
+    @app.route("/api/dark-joke", methods=["GET"])
+    def dark_joke():
+        return jsonify({"joke": fetch_joke("Dark")})
+
+    @app.route("/api/joke", methods=["GET"])
+    def random_joke():
+        return jsonify({"joke": fetch_joke("Programming,Misc,Pun")})
+
+    @app.route("/favicon.ico")
+    def favicon():
+        return "", 204
+
+    @app.route("/api/ping")
+    def ping():
+        return jsonify(
+            {
+                "status": "ok",
+                "aiMode": "online" if ai_service.is_online else "offline",
+                "store": get_store_backend(),
+            }
+        )
+
+    return app
+
+
+def fetch_joke(category: str) -> str:
     try:
-        res = requests.get(
-            "https://v2.jokeapi.dev/joke/Dark?type=single",
-            timeout=5
+        response = requests.get(
+            f"https://v2.jokeapi.dev/joke/{category}?type=single",
+            timeout=5,
         )
-        data = res.json()
+        response.raise_for_status()
+        data = response.json()
 
-        joke = data.get("joke") if data.get("type") == "single" else (
-            f"{data.get('setup')} — {data.get('delivery')}"
-        )
+        if data.get("type") == "single":
+            return data.get("joke", "No joke available right now.")
 
-        return jsonify({"joke": joke})
+        setup = data.get("setup", "").strip()
+        delivery = data.get("delivery", "").strip()
+        return f"{setup} - {delivery}".strip(" -")
+    except Exception as exc:
+        logger.warning("Joke fetch failed for %s: %s", category, exc)
+        return "My joke circuits are offline right now."
 
-    except Exception as e:
-        print("Dark joke error:", e)
-        return jsonify({"joke": "My dark humor circuits are offline 😅"}), 500
 
-# -----------------------
-# NORMAL JOKE API
-# -----------------------
-@app.route("/api/joke", methods=["GET"])
-def random_joke():
+def derive_behavior_updates(user_message: str, emotion: str) -> dict[str, object]:
+    updates: dict[str, object] = {}
+
+    if len(user_message) < 20:
+        updates["short_style"] = True
+
+    if "?" in user_message:
+        updates["asks_questions"] = True
+
+    if emotion == "sad":
+        updates["emotional_state"] = "low"
+    elif emotion == "happy":
+        updates["emotional_state"] = "positive"
+    elif emotion == "angry":
+        updates["emotional_state"] = "tense"
+
+    return updates
+
+
+def extract_preference_update(user_message: str) -> tuple[str, str] | None:
+    for pattern, key in PREFERENCE_PATTERNS:
+        match = pattern.search(user_message)
+        if match:
+            value = match.group(1).strip(" .,!?:;")
+            return key, value
+    return None
+
+
+def safe_get_memory(user_id: str, query: str, limit: int) -> list[tuple[str, str]]:
     try:
-        res = requests.get(
-            "https://v2.jokeapi.dev/joke/Programming,Misc,Pun?type=single",
-            timeout=5
-        )
-        data = res.json()
+        return get_memory(user_id, query, limit=limit)
+    except Exception as exc:
+        logger.warning("Memory fetch failed for %s: %s", user_id, exc)
+        return []
 
-        joke = data.get("joke") if data.get("type") == "single" else (
-            f"{data.get('setup')} — {data.get('delivery')}"
-        )
 
-        return jsonify({"joke": joke})
+def safe_get_preferences(user_id: str) -> dict[str, str]:
+    try:
+        return get_preferences(user_id) or {}
+    except Exception as exc:
+        logger.warning("Preference fetch failed for %s: %s", user_id, exc)
+        return {}
 
-    except Exception as e:
-        print("Joke error:", e)
-        return jsonify({"joke": "My joke circuits are offline 😅"}), 500
 
-# -----------------------
-# UTILS
-# -----------------------
-@app.route("/favicon.ico")
-def favicon():
-    return "", 204
+def safe_get_behavior(user_id: str) -> dict[str, object]:
+    try:
+        return get_behavior(user_id) or {}
+    except Exception as exc:
+        logger.warning("Behavior fetch failed for %s: %s", user_id, exc)
+        return {}
 
-@app.route("/api/ping")
-def ping():
-    return "LIBRA is alive ⚡"
 
-# -----------------------
-# RUN SERVER
-# -----------------------
+def safe_update_behavior(user_id: str, key: str, value: object) -> None:
+    try:
+        update_behavior(user_id, key, value)
+    except Exception as exc:
+        logger.warning("Behavior update failed for %s: %s", user_id, exc)
+
+
+def safe_save_preference(user_id: str, key: str, value: str) -> None:
+    try:
+        save_preference(user_id, key, value)
+    except Exception as exc:
+        logger.warning("Preference save failed for %s: %s", user_id, exc)
+
+
+def safe_save_memory(user_id: str, user_message: str, reply: str) -> None:
+    try:
+        save_memory(user_id, user_message, reply)
+    except Exception as exc:
+        logger.warning("Memory save failed for %s: %s", user_id, exc)
+
+
+app = create_app()
+
+
 if __name__ == "__main__":
     app.run(debug=True)
-    

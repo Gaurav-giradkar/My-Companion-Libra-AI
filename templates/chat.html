@@ -1,295 +1,244 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>My Companion</title>
+{% extends "base.html" %}
 
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=20">
-</head>
+{% block title %}My Companion | Chat{% endblock %}
+{% block body_class %}page-chat{% endblock %}
 
-<body class="ai-bg">
-
-<!-- FLOATING HUD NAV -->
+{% block body %}
 <div class="hud-nav">
-  <a href="/">HOME</a>
-  <a href="/about">ABOUT</a>
-
-  <!-- Theme Toggle -->
-  <button id="themeToggle">🎨</button>
+  <a href="/" class="brand-mark">
+    <span class="brand-pulse"></span>
+    <span class="brand-copy">
+      <strong>LIBRA</strong>
+      <small>Adaptive Companion Deck</small>
+    </span>
+  </a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/about">About</a>
+  </div>
+  <div class="nav-tools">
+    <div class="nav-theme-status">
+      <span class="nav-kicker">Theme</span>
+      <strong data-theme-name>Deep Blue</strong>
+    </div>
+    <button id="themeToggle" class="theme-toggle" type="button" title="Change theme">
+      Theme Matrix
+    </button>
+  </div>
 </div>
 
-<!-- FULLSCREEN STAGE -->
-<div class="ai-stage">
-
-  <!-- CHAT WINDOW -->
-  <div id="chatWindow" class="chat-window"></div>
-
-  <!-- AI CORE -->
-  <div class="ai-core">
-
-    <!-- WAVES -->
-    <div class="wave wave1"></div>
-    <div class="wave wave2"></div>
-    <div class="wave wave3"></div>
-    <div class="wave wave4"></div>
-    <div class="wave wave5"></div>
-
-    <!-- MAIN ORB -->
-    <div class="ai-circle" id="aiOrb">
-      <div class="ai-text" id="aiText">AI</div>
+<main class="chat-shell" id="chatShell">
+  <section class="deck-overview card interactive-card" data-tilt>
+    <div class="status-ribbon">
+      <div id="aiStatus" class="ai-status" data-state="ready">Ready to chat</div>
+      <div class="status-cluster">
+        <span class="mode-pill mode-pill-strong" id="modeLabel">Standby</span>
+        <span class="mode-pill mode-pill-muted">Memory: <span id="storeBackend">{{ store_backend }}</span></span>
+        <span class="mode-pill mode-pill-muted">Voice: <span id="voiceState">Off</span></span>
+      </div>
     </div>
 
-  </div>
+    <div class="overview-grid">
+      <div class="overview-copy">
+        <p class="panel-kicker">Conversation deck</p>
+        <h1>Neural Relay</h1>
+        <p>
+          Talk freely, launch shortcuts, or flip voice mode to make the room
+          react in real time.
+        </p>
+      </div>
 
-<!-- CHAT INPUT -->
-<div class="chat-panel">
+      <div class="overview-pills">
+        <div class="metric-chip">
+          <span>Local time</span>
+          <strong data-live-time>--:--</strong>
+        </div>
+        <div class="metric-chip">
+          <span>Theme</span>
+          <strong data-theme-name>Deep Blue</strong>
+        </div>
+        <div class="metric-chip">
+          <span>Pulse</span>
+          <strong id="pulseState">Nominal</strong>
+        </div>
+      </div>
+    </div>
+  </section>
 
-<button type="button" id="voiceToggle" class="chat-orb voice-orb" title="Toggle Voice">
-  🔇
-</button>
+  <section class="cockpit-grid">
+    <aside class="side-panel">
+      <div class="panel-card interactive-card" data-tilt>
+        <p class="panel-kicker">Command deck</p>
+        <h2>Launch fast interactions</h2>
+        <div class="quick-actions">
+          <button type="button" class="quick-action" data-command="How are you reading my mood right now?">Mood Scan</button>
+          <button type="button" class="quick-action" data-command="Give me a short motivational message.">Boost</button>
+          <button type="button" class="quick-action" data-command="What do you remember about me?">Memory Check</button>
+          <button type="button" class="quick-action" data-command="help">Help</button>
+          <button type="button" class="quick-action" data-command="time">Time</button>
+          <button type="button" class="quick-action" data-command="clear chat">Clear</button>
+        </div>
+      </div>
 
-<input
-  id="userInput"
-  class="chat-input-orb"
-  placeholder="Talk to My Companion..."
-  onkeydown="if(event.key === 'Enter' && !event.repeat) sendMessage()"
-/>
+      <div class="panel-card panel-card-dim interactive-card" data-tilt>
+        <p class="panel-kicker">Flight controls</p>
+        <div class="control-list">
+          <div class="control-item">
+            <span>Quick actions</span>
+            <p>Instantly load prompts without interrupting the visual flow.</p>
+          </div>
+          <div class="control-item">
+            <span>Voice mode</span>
+            <p>Turn spoken replies on to make the core pulse brighter.</p>
+          </div>
+          <div class="control-item">
+            <span>Direct chat</span>
+            <p>Type naturally or use local commands like <code>time</code> and <code>clear chat</code>.</p>
+          </div>
+        </div>
+      </div>
+    </aside>
 
-<button type="button" class="chat-orb send-orb" onclick="sendMessage()">
-  Send
-</button>
+    <section class="center-panel deck-panel interactive-card" data-tilt>
+      <div class="deck-header">
+        <div>
+          <p class="panel-kicker">Conversation chamber</p>
+          <h2>Reactive neural relay</h2>
+        </div>
+        <div class="deck-badges">
+          <span class="mode-pill mode-pill-muted">Date: <span data-live-date>---</span></span>
+          <span class="mode-pill mode-pill-muted">Session sync active</span>
+        </div>
+      </div>
 
-</div>
-</div>
+      <div class="chat-visual">
+        <div class="chat-window-frame">
+          <div class="frame-bar">
+            <span>Incoming transmissions</span>
+            <span><span id="messageCount">0</span> messages</span>
+          </div>
+          <div id="chatWindow" class="chat-window" aria-live="polite"></div>
+        </div>
 
-<!-- CHAT LOGIC -->
-<script>
-const aiStatus = document.getElementById("ai-status");
+        <div class="ai-core" aria-hidden="true">
+          <div class="wave wave1"></div>
+          <div class="wave wave2"></div>
+          <div class="wave wave3"></div>
+          <div class="wave wave4"></div>
+          <div class="wave wave5"></div>
+          <div class="ai-ring ai-ring-one"></div>
+          <div class="ai-ring ai-ring-two"></div>
 
-function setStatus(text, emoji = "🟢") {
-  if (!aiStatus) return;
-  aiStatus.textContent = `${emoji} ${text}`;
-}
+          <div class="ai-orb" id="aiOrb">
+            <div class="ai-text">AI</div>
+          </div>
+        </div>
+      </div>
 
-// --------------------
-// STATE
-// --------------------
-let voiceEnabled = false;
-let selectedVoice = null;
-let isSending = false;
+      <form id="chatForm" class="chat-panel">
+        <button
+          type="button"
+          id="voiceToggle"
+          class="chat-button chat-button-secondary"
+          aria-pressed="false"
+        >
+          Voice off
+        </button>
 
-// --------------------
-// ELEMENTS
-// --------------------
-const voiceToggle = document.getElementById("voiceToggle");
-const userInput = document.getElementById("userInput");
-const chatWindow = document.getElementById("chatWindow");
-const aiOrb = document.getElementById("aiOrb");
+        <label class="sr-only" for="userInput">Message</label>
+        <input
+          id="userInput"
+          class="chat-input"
+          maxlength="{{ max_message_length }}"
+          placeholder="Transmit a message to LIBRA..."
+          autocomplete="off"
+        />
 
-// --------------------
-// VOICE TOGGLE
-// --------------------
-voiceToggle.addEventListener("click", () => {
-  voiceEnabled = !voiceEnabled;
-  voiceToggle.textContent = voiceEnabled ? "🔊" : "🔇";
-  voiceToggle.classList.toggle("active", voiceEnabled);
+        <button type="submit" id="sendButton" class="chat-button chat-button-primary">
+          Send
+        </button>
+      </form>
 
-  if (!voiceEnabled) speechSynthesis.cancel();
+      <div class="panel-foot">
+        <div class="input-hint">Use quick actions for instant prompts or type freely to keep the conversation organic.</div>
+        <div class="input-meta">
+          <span class="meta-chip">Max {{ max_message_length }}</span>
+          <span class="meta-chip"><span id="charCount">0</span> chars</span>
+        </div>
+      </div>
 
-  aiOrb.style.boxShadow = voiceEnabled
-    ? "0 0 80px rgba(56,189,248,1)"
-    : "0 0 30px rgba(56,189,248,0.4)";
-});
+      <div class="suggestion-strip">
+        <button type="button" class="suggestion-chip" data-command="Tell me something creative.">Creative spark</button>
+        <button type="button" class="suggestion-chip" data-command="Ask me one thoughtful question.">Deep question</button>
+        <button type="button" class="suggestion-chip" data-command="search futuristic interface inspiration">Search idea</button>
+      </div>
+    </section>
 
-// --------------------
-// CHAT BUBBLES
-// --------------------
-function addUserBubble(text) {
-  const bubble = document.createElement("div");
-  bubble.className = "message user";
-  bubble.textContent = text;
-  chatWindow.appendChild(bubble);
-  chatWindow.scrollTop = chatWindow.scrollHeight;
-}
+    <aside class="side-panel">
+      <div class="panel-card telemetry-card interactive-card" data-tilt>
+        <p class="panel-kicker">Signal monitor</p>
+        <strong id="signalText" class="signal-text">Waiting for first transmission.</strong>
+        <div class="telemetry-grid">
+          <div class="stat-tile">
+            <span>Mode</span>
+            <strong id="signalMode">Standby</strong>
+          </div>
+          <div class="stat-tile">
+            <span>Messages</span>
+            <strong id="messageMirror">0</strong>
+          </div>
+          <div class="stat-tile">
+            <span>Backend</span>
+            <strong>{{ store_backend }}</strong>
+          </div>
+        </div>
 
-function addAIBubble(text) {
-  const bubble = document.createElement("div");
-  bubble.className = "message ai";
-  bubble.textContent = text;
-  chatWindow.appendChild(bubble);
-  chatWindow.scrollTop = chatWindow.scrollHeight;
-}
+        <div class="meter-stack">
+          <div class="meter-row">
+            <div class="meter-label">
+              <span>Focus</span>
+              <strong id="focusValue">64%</strong>
+            </div>
+            <div class="meter-bar">
+              <span id="focusFill" style="width: 64%"></span>
+            </div>
+          </div>
+          <div class="meter-row">
+            <div class="meter-label">
+              <span>Resonance</span>
+              <strong id="resonanceValue">51%</strong>
+            </div>
+            <div class="meter-bar">
+              <span id="resonanceFill" style="width: 51%"></span>
+            </div>
+          </div>
+          <div class="meter-row">
+            <div class="meter-label">
+              <span>Response</span>
+              <strong id="responseValue">72%</strong>
+            </div>
+            <div class="meter-bar">
+              <span id="responseFill" style="width: 72%"></span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-// --------------------
-// TEXT TO SPEECH
-// --------------------
-function speak(text) {
-  if (!("speechSynthesis" in window)) return;
+      <div class="panel-card panel-card-dim interactive-card" data-tilt>
+        <p class="panel-kicker">Event feed</p>
+        <div id="eventFeed" class="event-feed">
+          <div class="event-item">
+            <span>BOOT</span>
+            <p>Chat deck synced and awaiting the first transmission.</p>
+            <small data-live-time>--:--</small>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </section>
+</main>
+{% endblock %}
 
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.rate = 1;
-  u.pitch = 1.1;
-  u.volume = 1;
-
-  if (selectedVoice) u.voice = selectedVoice;
-  speechSynthesis.speak(u);
-}
-
-function speakIfEnabled(text) {
-  if (voiceEnabled) speak(text);
-}
-
-// --------------------
-// FINISH HELPER
-// --------------------
-function finish(text) {
-  setStatus("ONLINE", "🟢");
-  addAIBubble(text);
-  speakIfEnabled(text);
-
-  userInput.disabled = false;
-  userInput.focus();
-  isSending = false;
-}
-
-// --------------------
-// SEND MESSAGE
-// --------------------
-async function sendMessage() {
-  if (isSending) return;
-  isSending = true;
-
-  const message = userInput.value.trim();
-  if (!message) {
-    isSending = false;
-    return;
-  }
-
-  userInput.value = "";
-  const msg = message.toLowerCase();
-
-  addUserBubble(message);
-
-  try {
-    if (msg === "libra") {
-      finish("Yes, I am listening.");
-      return;
-    }
-
-    if (msg === "time") {
-      finish(`The current time is ${new Date().toLocaleTimeString()}`);
-      return;
-    }
-
-    if (msg === "date") {
-      finish(`Today is ${new Date().toDateString()}`);
-      return;
-    }
-
-    if (msg === "clear chat") {
-      chatWindow.innerHTML = "";
-      finish("Chat cleared.");
-      return;
-    }
-
-    if (msg.startsWith("open ")) {
-      const site = msg.replace("open ", "").trim();
-      const url = site.includes(".")
-        ? `https://${site}`
-        : `https://${site}.com`;
-    
-      window.open(url, "_blank");
-      finish(`Opening ${site}...`);
-      return;
-    }
-
-    if (msg.startsWith("search ")) {
-      const query = msg.replace("search ", "").trim();
-      if (query) {
-        window.open(
-          `https://www.google.com/search?q=${encodeURIComponent(query)}`,
-          "_blank"
-        );
-        finish(`Searching for ${query}...`);
-        return;
-      }
-    }
-
-    if (["exit", "quit", "bye", "stop"].includes(msg)) {
-      finish("Goodbye. LIBRA is going offline.");
-      return;
-    }
-
-    await sendToAI(message);
-
-  } catch (err) {
-    finish("System error — input unlocked.");
-  }
-}
-
-// --------------------
-// SEND TO AI (BACKEND)
-// --------------------
-async function sendToAI(message) {
-  userInput.disabled = true;
-  setStatus("THINKING", "🟡");
-
-  const typingBubble = document.createElement("div");
-  typingBubble.className = "message ai typing";
-  typingBubble.textContent = "LIBRA is thinking...";
-  chatWindow.appendChild(typingBubble);
-  chatWindow.scrollTop = chatWindow.scrollHeight;
-
-  try {
-    const response = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message })
-    });
-
-    if (!response.ok) {
-      throw new Error("Server error");
-    }
-
-    const data = await response.json();
-    typingBubble.remove();
-
-    const reply =
-      data.reply ||
-      data.response ||
-      data.message ||
-      "LIBRA did not receive a valid response.";
-
-    finish(reply);
-
-  } catch (err) {
-    console.error("AI Error:", err);
-    typingBubble.remove();
-    finish("⚠️ Backend not responding — check Flask console");
-  }
-}
-
-// --------------------
-// VOICE LOADER
-// --------------------
-function loadVoices() {
-  const voices = speechSynthesis.getVoices();
-  if (!voices.length) return;
-
-  const englishVoices = voices.filter(v =>
-    v.lang.toLowerCase().startsWith("en")
-  );
-
-  selectedVoice = englishVoices[0] || null;
-}
-
-speechSynthesis.onvoiceschanged = loadVoices;
-loadVoices();
-</script>
-
-<!-- SHARED THEME SCRIPT -->
-<script src="{{ url_for('static', filename='js/theme.js') }}"></script>
-
-</body>
-</html>
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% endblock %}

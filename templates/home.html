@@ -1,45 +1,180 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>My Companion</title>
+{% extends "base.html" %}
 
-  <!-- THEME CSS -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=7" />
-</head>
+{% block title %}My Companion | Home{% endblock %}
+{% block body_class %}page-home{% endblock %}
 
-<body class="ai-bg">
-
-<!-- FLOATING HUD NAV -->
-<div class="hud-nav fade-in fade-delay-1">
-  <a href="/about">ℹ️ About</a>
-  <button id="themeToggle" class="theme-toggle" title="Change Theme">🎨</button>
-</div>
-  
-<!-- HERO STAGE -->
-<div class="ai-stage">
-
-  <div class="home-core glass fade-in fade-delay-1">
-
-    <h1 class="glow-title fade-in fade-delay-1">
-      My Companion Libra-AI
-    </h1>
-
-    <p class="hero-text fade-in fade-delay-2">
-      Your always-on AI companion that listens, understands emotions,
-      and helps you stay productive, motivated, and connected.
-    </p>
-
-    <div class="hero-actions fade-in fade-delay-3">
-      <a href="/chat" class="hero-btn">Start Chatting</a>
+{% block body %}
+<div class="hud-nav">
+  <a href="/" class="brand-mark">
+    <span class="brand-pulse"></span>
+    <span class="brand-copy">
+      <strong>LIBRA</strong>
+      <small>Adaptive Companion Deck</small>
+    </span>
+  </a>
+  <div class="nav-links">
+    <a href="/about">About</a>
+    <a href="/chat">Chat</a>
+  </div>
+  <div class="nav-tools">
+    <div class="nav-theme-status">
+      <span class="nav-kicker">Theme</span>
+      <strong data-theme-name>Deep Blue</strong>
     </div>
+    <button id="themeToggle" class="theme-toggle" type="button" title="Change theme">
+      Theme Matrix
+    </button>
+  </div>
+</div>
 
+<main class="page-stage home-stage">
+  <div class="hero-shell hero-shell-expanded">
+    <section class="card hero-card hero-card-main interactive-card" data-tilt>
+      <div class="hero-topline">
+        <p class="eyebrow">Adaptive AI command environment</p>
+        <div class="signal-badge">
+          <span class="signal-dot"></span>
+          Live interface
+        </div>
+      </div>
+
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <h1>Futuristic interface. Human conversation. Zero dead air.</h1>
+          <p class="lead">
+            LIBRA now lands like a cinematic control room: layered depth,
+            animated telemetry, ambient motion, and a chat flow that feels live
+            the moment the screen opens.
+          </p>
+          <div class="hero-actions">
+            <a href="/chat" class="button-link button-link-primary">Enter Chat Deck</a>
+            <a href="/about" class="button-link button-link-secondary">System Overview</a>
+          </div>
+        </div>
+
+        <div class="hero-preview">
+          <div class="hero-orbit">
+            <div class="hero-orbit-ring ring-a"></div>
+            <div class="hero-orbit-ring ring-b"></div>
+            <div class="hero-orbit-ring ring-c"></div>
+            <div class="hero-core">
+              <span class="hero-core-label">LIBRA</span>
+              <strong>Neural deck online</strong>
+              <small><span data-live-time>--:--</span> / <span data-live-date>---</span></small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-matrix">
+        <div class="matrix-pill"><span class="pill-icon"></span>Emotion aware</div>
+        <div class="matrix-pill"><span class="pill-icon"></span>Session memory</div>
+        <div class="matrix-pill"><span class="pill-icon"></span>Theme reactive</div>
+        <div class="matrix-pill"><span class="pill-icon"></span>Offline fallback</div>
+      </div>
+    </section>
+
+    <div class="status-stack hero-side-stack">
+      <section class="card mini-card signal-card interactive-card" data-tilt>
+        <p class="panel-kicker">Live telemetry</p>
+        <strong>Companion status grid</strong>
+        <div class="telemetry-lines">
+          <div class="telemetry-row">
+            <span>Theme profile</span>
+            <strong data-theme-name>Deep Blue</strong>
+          </div>
+          <div class="telemetry-row">
+            <span>Local time</span>
+            <strong data-live-time>--:--</strong>
+          </div>
+          <div class="telemetry-row">
+            <span>Interface mode</span>
+            <strong>Reactive glass UI</strong>
+          </div>
+        </div>
+      </section>
+      <section class="card mini-card interactive-card" data-tilt>
+        <p class="panel-kicker">Mode stack</p>
+        <strong>Cloud + Local intelligence</strong>
+        <p>Gemini handles live answers when available, and local fallback keeps the atmosphere intact when it is not.</p>
+      </section>
+      <section class="card mini-card mini-card-accent interactive-card" data-tilt>
+        <p class="panel-kicker">Interface shift</p>
+        <strong>Built for high-presence chat</strong>
+        <p>Quick actions, hover depth, live stats, and a more immersive conversation chamber across desktop and mobile.</p>
+      </section>
+    </div>
   </div>
 
-</div>
+  <section class="feature-constellation">
+    <article class="panel-card feature-panel interactive-card" data-tilt>
+      <p class="panel-kicker">Neural feel</p>
+      <h2>Atmospheric visuals with purpose</h2>
+      <p>Layered gradients, orbital motion, scanline texture, and better depth cues keep the UI alive instead of flat.</p>
+      <div class="feature-meter">
+        <span>Immersion</span>
+        <strong data-countup="92">0</strong>
+      </div>
+    </article>
 
-<!-- SHARED THEME SCRIPT -->
-<script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+    <article class="panel-card feature-panel interactive-card" data-tilt>
+      <p class="panel-kicker">Fast motion</p>
+      <h2>Interaction that answers back</h2>
+      <p>The interface now reacts to hover, pointer drift, theme changes, and chat state so the screen feels responsive.</p>
+      <div class="feature-meter">
+        <span>Responsiveness</span>
+        <strong data-countup="88">0</strong>
+      </div>
+    </article>
 
-</body>
-</html>
+    <article class="panel-card feature-panel interactive-card" data-tilt>
+      <p class="panel-kicker">Signal clarity</p>
+      <h2>Readable even when dramatic</h2>
+      <p>The new layout keeps the futuristic tone while tightening spacing, hierarchy, and mobile flow for day-to-day use.</p>
+      <div class="feature-meter">
+        <span>Clarity</span>
+        <strong data-countup="94">0</strong>
+      </div>
+    </article>
+  </section>
+
+  <section class="home-lower-grid">
+    <article class="card mission-card interactive-card" data-tilt>
+      <p class="panel-kicker">Mission path</p>
+      <h2>From landing page to live conversation in one smooth route.</h2>
+      <div class="mission-steps">
+        <div class="mission-step">
+          <span>01</span>
+          <strong>Scan the deck</strong>
+          <p>Landing view surfaces system state, active theme, and experience direction immediately.</p>
+        </div>
+        <div class="mission-step">
+          <span>02</span>
+          <strong>Enter the chamber</strong>
+          <p>Chat opens as a central relay with telemetry, event feed, and a stronger sense of place.</p>
+        </div>
+        <div class="mission-step">
+          <span>03</span>
+          <strong>Stay in flow</strong>
+          <p>Quick commands, voice mode, and dynamic status changes keep the interaction moving.</p>
+        </div>
+      </div>
+    </article>
+
+    <article class="card command-card interactive-card" data-tilt>
+      <p class="panel-kicker">Launch shortcuts</p>
+      <h2>Choose how you want to enter.</h2>
+      <div class="command-list">
+        <a href="/chat" class="command-item">
+          <span>Chat Deck</span>
+          <strong>Start a live conversation with telemetry and quick actions.</strong>
+        </a>
+        <a href="/about" class="command-item">
+          <span>System Briefing</span>
+          <strong>Review the stack, memory model, and runtime behavior.</strong>
+        </a>
+      </div>
+    </article>
+  </section>
+</main>
+{% endblock %}

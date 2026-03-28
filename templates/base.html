@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}My Companion{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=20260328" />
+</head>
+<body class="ai-bg {% block body_class %}{% endblock %}">
+  <div class="scene-backdrop" aria-hidden="true">
+    <div class="scene-gradient"></div>
+    <div class="scene-grid"></div>
+    <div class="scene-glow scene-glow-a"></div>
+    <div class="scene-glow scene-glow-b"></div>
+    <div class="scene-glow scene-glow-c"></div>
+    <div class="scene-scanlines"></div>
+  </div>
+
+  <div class="page-shell">
+    {% block body %}{% endblock %}
+  </div>
+
+  <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/interface.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

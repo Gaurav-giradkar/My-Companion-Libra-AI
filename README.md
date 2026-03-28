@@ -1,92 +1,119 @@
-🤖 My Companion — LIBRA AI
+# My Companion LIBRA AI
 
-LIBRA is a futuristic, web-based AI companion designed to chat, joke, assist, and interact with users in real time.
-It supports both online AI mode (Google Gemini API) and a smart offline fallback mode, making it reliable even without internet or API access.
+My Companion is a Flask web app for chatting with an AI companion that can:
 
-Built with Flask, modern UI design, and cloud deployment using Render.
+- use Google Gemini when an API key is available
+- fall back to an offline reply mode when cloud AI is unavailable
+- remember recent conversations, preferences, and behavior signals
+- use Firebase when configured, or a local JSON store when it is not
 
-🌟 Features
-💬 Real-Time AI Chat (Gemini-powered)
-⚡ Offline AI Mode (Smart fallback replies)
-😂 Jokes & Dark Humor API
-🎨 Futuristic Animated UI
-🌐 Cloud Deployed (Render)
-📱 Mobile Friendly
-🔐 Secure API Key Handling via Environment Variables
+## Highlights
 
-🧠 Tech Stack
-------------------------------------------------
-Technology	               |  Purpose
-Python (Flask)	           |  Backend Server
-HTML / CSS / JavaScript	   |  Frontend UI
-Google Gemini API          | 	AI Responses
-Render	                   |  Cloud Hosting
-Gunicorn	                 |  Production Server
-JokeAPI      	             |  Humor System
+- Resilient startup with lazy Gemini and Firebase initialization
+- Session-based users instead of one hardcoded profile
+- Local similarity-based memory retrieval without extra ML dependencies
+- Mobile-friendly chat UI with theme switching and optional text-to-speech
+- Cleaner project structure with backend services and basic automated tests
 
-## 🚀 Live Demo
-👉 **Try LIBRA Online**  
-https://my-companion-libra-ai.onrender.com
+## Tech Stack
 
---------------------------------------------------------------------------------
+- Python
+- Flask
+- Google Gemini
+- Firebase Admin SDK
+- HTML, CSS, JavaScript
+- Gunicorn
+
+## Project Structure
+
+```text
+.
+|-- app.py
+|-- config/
+|   `-- settings.py
+|-- services/
+|   |-- ai_service.py
+|   `-- conversation_store.py
+|-- static/
+|   |-- css/style.css
+|   `-- js/
+|       |-- chat.js
+|       `-- theme.js
+|-- templates/
+|   |-- base.html
+|   |-- home.html
+|   |-- about.html
+|   `-- chat.html
+|-- tests/
+|-- utils/
+|   |-- embedding.py
+|   `-- emotion.py
+`-- firebase_db.py
+```
+
+## Environment Variables
+
+Create a `.env` file for local development.
+
+```env
+SECRET_KEY=change-this-in-production
+GEMINI_API_KEY=your_gemini_api_key
+FIREBASE_KEY_PATH=config/firebase_key.json
+LIBRA_STORE_BACKEND=auto
+LOCAL_STORE_PATH=instance/libra_state.json
+MAX_MESSAGE_LENGTH=500
+LIBRA_MEMORY_LIMIT=5
+LIBRA_MAX_STORED_MEMORIES=200
+ENABLE_HTTPS_REDIRECT=false
+```
+
+`LIBRA_STORE_BACKEND` supports:
+
+- `auto`: use Firebase when available, otherwise local JSON storage
+- `firebase`: prefer Firebase and fall back to local storage if unavailable
+- `local`: always use local JSON storage
+
+## Local Setup
+
+1. Create and activate a virtual environment.
+2. Install dependencies.
+3. Add the environment variables above.
+4. Run the Flask app.
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+python app.py
+```
+
+Open `http://127.0.0.1:5000`.
+
+## Running Tests
+
+The included tests use the standard library `unittest` runner.
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+## Deployment
+
+Example Gunicorn command:
+
+```bash
+gunicorn app:app
+```
+
+If you deploy behind a proxy, keep `ENABLE_HTTPS_REDIRECT=true`.
+
+## API Endpoints
+
+- `POST /api/chat`
+- `GET /api/joke`
+- `GET /api/dark-joke`
+- `GET /api/ping`
+
 ## License
-This project is licensed under the Apache License 2.0 © 2026 Gaurav Giradkar
---------------------------------------------------------------------------------
 
-## ⚙️ Installation (Local Setup)
-
-### 1️⃣ Clone Repository
-
-git clone https://github.com/Gaurav-giradkar/My-Companion-Libra-AI.git
-cd My-Companion-Libra-AI
-2️⃣ Install Dependencies
-pip install -r requirements.txt
-3️⃣ Set Environment Variable
-Create a .env file:
-
-GEMINI_API_KEY=your_api_key_here
-4️⃣ Run App
-python main.py
-Open in browser:
-
-http://127.0.0.1:5000
-☁️ Deployment (Render)
-Connect GitHub repository
-
-Build Command:
-pip install -r requirements.txt
-Start Command:
-gunicorn main:app
-Environment Variable:
-
-GEMINI_API_KEY=your_api_key_here
-🧪 API Endpoints
-Endpoint	Method	Description
-/api/chat	POST	AI Chat
-/api/joke	GET	Normal Joke
-/api/dark-joke	GET	Dark Humor
-/api/ping	GET	Health Check
-🛡️ Security
-API keys are stored using environment variables
-
-.env file is excluded from GitHub using .gitignore
-
-🧑‍💻 Developer
-Gaurav Giradkar
-Second-Year Student | AI & Web Developer
-
-📜 License
-This project is licensed under the MIT License
-
-🌠 Future Enhancements
-🎙️ Voice Input & Output
-📲 PWA Mobile App Mode
-🧠 Memory System
-👤 User Accounts
-🌐 Multi-AI Support
-⭐ Support
-
-If you like this project:
-Star this repo ⭐
-Fork it 🍴
-Share it 🚀
+This project is licensed under the Apache License 2.0. See [LICENSE](LICENSE).
