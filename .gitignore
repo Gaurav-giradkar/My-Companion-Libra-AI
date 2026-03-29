@@ -1,50 +1,52 @@
-# Secrets
-.env
-.envrc
-config/firebase_key.json
-
-# Python caches
+# ======================
+# Python
+# ======================
 __pycache__/
 *.py[cod]
-*$py.class
+*.pyo
 
-# Virtual environments
+# ======================
+# Virtual Environment
+# ======================
 .venv/
 venv/
-env/
-ENV/
 
-# Flask / local data
-instance/
-.webassets-cache
+# ======================
+# Dependencies (IMPORTANT)
+# ======================
+.deps/
 
-# Test and coverage output
-.pytest_cache/
-.coverage
-.coverage.*
-htmlcov/
-.hypothesis/
-.tox/
-.nox/
+# ======================
+# Temp Files
+# ======================
+.tmp/
+tmp-edge-profile/
+tmp-edge-profile*/
 
-# Build artifacts
-build/
-dist/
-*.egg-info/
-.eggs/
-*.egg
-
-# Logs
+# ======================
+# Logs & Runtime
+# ======================
 *.log
+*.err
+*.dat
+pyright_errors.txt
 
-# Editors and OS files
+# ======================
+# Cache
+# ======================
+.pytest_cache/
+.mypy_cache/
+.cache/
+
+# ======================
+# Secrets
+# ======================
+.env
+config/firebase_key.json
+
+# ======================
+# Editor / OS
+# ======================
 .vscode/
-.idea/
 .DS_Store
 Thumbs.db
-
-# Type checker caches
-.mypy_cache/
-.ruff_cache/
-.pyre/
-.pytype/
