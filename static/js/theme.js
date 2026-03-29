@@ -1,8 +1,8 @@
 const THEMES = [
-  { id: "blue", label: "Deep Blue", detail: "cool neon grid" },
-  { id: "green", label: "Signal Green", detail: "clean synth glow" },
-  { id: "red", label: "Solar Red", detail: "alert cinema hue" },
-  { id: "purple", label: "Night Violet", detail: "midnight plasma" },
+  { id: "blue", label: "Neon Abyss", detail: "cool neon grid" },
+  { id: "green", label: "Matrix Core", detail: "clean synth glow" },
+  { id: "red", label: "Crimson Vibe", detail: "alert cinema hue" },
+  { id: "purple", label: "Nebula Night", detail: "midnight plasma" },
 ];
 
 const THEME_CLASSES = THEMES.map((theme) => `theme-${theme.id}`);
